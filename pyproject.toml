@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vehicle-abcrown"
+name = "vnnlib-abcrown"
 dynamic = ["version"]
 description = "Use alpha-beta-CROWN as a verification backend for the Vehicle specification language"
 readme = "README.md"
@@ -14,10 +14,10 @@ dependencies = ["numpy", "onnx", "onnxruntime"]
 test = ["pytest"]
 
 [project.scripts]
-vehicle-abcrown = "vehicle_abcrown.cli:main"
+vnnlib-abcrown = "vnnlib_abcrown.cli:main"
 
 [tool.setuptools.dynamic]
-version = { attr = "vehicle_abcrown.__version__" }
+version = { attr = "vnnlib_abcrown.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]

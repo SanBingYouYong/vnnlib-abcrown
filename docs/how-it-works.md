@@ -1,18 +1,18 @@
-# How vehicle-abcrown works
+# How vnnlib-abcrown works
 
 This document describes the pipeline from `vehicle verify` to α,β-CROWN and
-back. The code is in `src/vehicle_abcrown/`.
+back. The code is in `src/vnnlib_abcrown/`.
 
 ## Vehicle's side (unchanged)
 
 ```bash
-vehicle verify -s spec.vcl -n classifier:net.onnx ... --solver bin/vehicle-abcrown
+vehicle verify -s spec.vcl -n classifier:net.onnx ... --solver bin/vnnlib-abcrown
 ```
 
 Vehicle (0.28) treats any solver it does not recognise as Marabou as a generic
 "VNN-LIB solver" (`src/Vehicle/Verify/Solver/VNNLIB.hs` in Vehicle):
 
-1. It calls `vehicle-abcrown --name` (we answer `abcrown`) and `--version`.
+1. It calls `vnnlib-abcrown --name` (we answer `abcrown`) and `--version`.
 2. It compiles each property into **queries** in VNN-LIB 2.0. Each query
    asks for an assignment that *violates* the property (or, for `exists`,
    satisfies it). Vehicle performs the quantifier and disjunction splitting
@@ -21,7 +21,7 @@ Vehicle (0.28) treats any solver it does not recognise as Marabou as a generic
 3. For each query it runs
 
    ```
-   vehicle-abcrown QUERY.vnnlib --network classifier=net.onnx --network classifier_2=net.onnx <solver args>
+   vnnlib-abcrown QUERY.vnnlib --network classifier=net.onnx --network classifier_2=net.onnx <solver args>
    ```
 
    with one `--network` per *application* of a network in the property.

@@ -33,7 +33,7 @@ expertise yet; that is what we are asking for.
 | | |
 |---|---|
 | `docs/how-it-works.md` | the pipeline, step by step, with a worked example |
-| `src/vehicle_abcrown/` | the code (~1300 lines); `inputs.py` and `translate.py` hold the main ideas |
+| `src/vnnlib_abcrown/` | the code (~1300 lines); `inputs.py` and `translate.py` hold the main ideas |
 | `docs/tutorial-check/README.md` | Marabou vs α,β-CROWN on the tutorial: method and results |
 | `docs/tutorial-check/results/` | every transcript from that run, and `report.md` with the per-case table |
 | `PROGRESS.md` | development log, including bugs found and how they were fixed |

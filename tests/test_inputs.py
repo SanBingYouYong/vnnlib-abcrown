@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from vehicle_abcrown.inputs import analyse
-from vehicle_abcrown.vnnlib import Unsupported
+from vnnlib_abcrown.inputs import analyse
+from vnnlib_abcrown.vnnlib import Unsupported
 
 
 def box(key, lo, hi):

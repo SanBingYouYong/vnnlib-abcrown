@@ -3,7 +3,7 @@
 import os
 import sys
 
-from vehicle_abcrown.runner import Runner
+from vnnlib_abcrown.runner import Runner
 
 FAKE = r'''
 import sys

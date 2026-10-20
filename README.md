@@ -1,4 +1,4 @@
-# vehicle-abcrown
+# vnnlib-abcrown
 
 Use [α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN) as a
 verification backend for the [Vehicle](https://github.com/vehicle-lang/vehicle)
@@ -6,7 +6,7 @@ specification language.
 
 ```bash
 vehicle verify -s spec.vcl -n net:net.onnx ... \
-  --solver /path/to/vehicle-abcrown/bin/vehicle-abcrown \
+  --solver /path/to/vnnlib-abcrown/bin/vnnlib-abcrown \
   --solver-args "--timeout 300"
 ```
 
@@ -33,12 +33,12 @@ Configuration is through environment variables:
 |---|---|---|
 | `ABCROWN_ROOT` | `~/alpha-beta-CROWN` | α,β-CROWN checkout |
 | `ABCROWN_PYTHON` | `$ABCROWN_ROOT/.venv/bin/python` | Python used for the adapter and α,β-CROWN |
-| `VEHICLE_ABCROWN_KEEP` | unset | keep the generated files in `/tmp/vehicle-abcrown-*` |
-| `VEHICLE_ABCROWN_EXACT_INPUTS` | unset | same as `--exact-inputs` |
-| `VEHICLE_ABCROWN_INPUT_SPLIT_MAX` | `16` | use input splitting for problems with at most this many inputs |
+| `VNNLIB_ABCROWN_KEEP` | unset | keep the generated files in `/tmp/vnnlib-abcrown-*` |
+| `VNNLIB_ABCROWN_EXACT_INPUTS` | unset | same as `--exact-inputs` |
+| `VNNLIB_ABCROWN_INPUT_SPLIT_MAX` | `16` | use input splitting for problems with at most this many inputs |
 
 Alternatively, `pip install` this project into α,β-CROWN's environment and use
-its `vehicle-abcrown` script as the solver.
+its `vnnlib-abcrown` script as the solver.
 
 ## Options
 
@@ -68,9 +68,9 @@ too, e.g. `--timeout 300`, `--conv_mode patches` or `--config my.yaml`.
 Vehicle calls any solver other than Marabou as
 
 ```
-vehicle-abcrown --name
-vehicle-abcrown --version
-vehicle-abcrown QUERY.vnnlib --network NAME=FILE.onnx ... <solver args>
+vnnlib-abcrown --name
+vnnlib-abcrown --version
+vnnlib-abcrown QUERY.vnnlib --network NAME=FILE.onnx ... <solver args>
 ```
 
 with a VNN-LIB 2.0 query, and expects `unsat`, `timeout`, or `sat` followed by
@@ -159,12 +159,12 @@ lazily, in rounds:
 ```bash
 cd examples/toy
 vehicle verify -s global-stability.vcl -n toy:toy.onnx \
-  -p epsilon:0.05 -p delta:0.1 -v ../../bin/vehicle-abcrown -a "--timeout 120"
+  -p epsilon:0.05 -p delta:0.1 -v ../../bin/vnnlib-abcrown -a "--timeout 120"
 
 cd examples/mnist
 vehicle verify -s standard-robustness.vcl -n classifier:mnist-classifier.onnx \
   -d images:t3-images.idx \
-  -p epsilon:0.005 -p delta:5.0 -v ../../bin/vehicle-abcrown -a "--timeout 300"
+  -p epsilon:0.005 -p delta:5.0 -v ../../bin/vnnlib-abcrown -a "--timeout 300"
 ```
 
 ## Tests

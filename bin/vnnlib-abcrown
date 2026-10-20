@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Vehicle solver executable for alpha-beta-CROWN:
-#   vehicle verify ... --solver /path/to/bin/vehicle-abcrown
+#   vehicle verify ... --solver /path/to/bin/vnnlib-abcrown
 # Runs the adapter with alpha-beta-CROWN's own Python, which already has the
 # adapter's dependencies (numpy, onnx, onnxruntime).
 #   ABCROWN_ROOT   alpha-beta-CROWN checkout (default: ~/alpha-beta-CROWN)
@@ -9,4 +9,4 @@ HERE="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 export ABCROWN_ROOT="${ABCROWN_ROOT:-$HOME/alpha-beta-CROWN}"
 export ABCROWN_PYTHON="${ABCROWN_PYTHON:-$ABCROWN_ROOT/.venv/bin/python}"
 export PYTHONPATH="$HERE/src${PYTHONPATH:+:$PYTHONPATH}"
-exec "$ABCROWN_PYTHON" -m vehicle_abcrown "$@"
+exec "$ABCROWN_PYTHON" -m vnnlib_abcrown "$@"

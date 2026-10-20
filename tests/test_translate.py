@@ -6,9 +6,9 @@ import re
 import numpy as np
 import onnxruntime as ort
 
-from vehicle_abcrown.cli import print_solution
-from vehicle_abcrown.translate import solve
-from vehicle_abcrown.vnnlib import parse_query
+from vnnlib_abcrown.cli import print_solution
+from vnnlib_abcrown.translate import solve
+from vnnlib_abcrown.vnnlib import parse_query
 
 from helpers import global_query, make_mlp, mlp_forward, mlp_weights
 

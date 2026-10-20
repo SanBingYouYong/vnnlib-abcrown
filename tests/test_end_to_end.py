@@ -15,7 +15,7 @@ import pytest
 from helpers import (MNIST_DIR, PROJECT, global_query, have_abcrown, linf_lipschitz_bound,
                      make_mlp, mlp_forward, mlp_weights, vehicle_executable)
 
-LAUNCHER = os.path.join(PROJECT, "bin", "vehicle-abcrown")
+LAUNCHER = os.path.join(PROJECT, "bin", "vnnlib-abcrown")
 TOY_DIR = os.path.join(PROJECT, "examples", "toy")
 
 needs_abcrown = pytest.mark.skipif(not have_abcrown(), reason="α,β-CROWN not found (set ABCROWN_ROOT)")

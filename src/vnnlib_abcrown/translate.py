@@ -35,7 +35,7 @@ MAX_CLAUSES = 10000
 
 def log(*args):
     import sys
-    print("[vehicle-abcrown]", *args, file=sys.stderr, flush=True)
+    print("[vnnlib-abcrown]", *args, file=sys.stderr, flush=True)
 
 
 def fmt(v):

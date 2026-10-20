@@ -2,7 +2,7 @@ import numpy as np
 import onnxruntime as ort
 import pytest
 
-from vehicle_abcrown.onnx_tools import Block, build_spec_network, prepare, run_onnx
+from vnnlib_abcrown.onnx_tools import Block, build_spec_network, prepare, run_onnx
 
 from helpers import MNIST_ONNX, make_mlp, mlp_weights
 

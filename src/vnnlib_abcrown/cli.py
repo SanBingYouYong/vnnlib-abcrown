@@ -1,8 +1,8 @@
 """Command-line entry point implementing Vehicle's VNN-LIB solver protocol:
 
-    vehicle-abcrown --name
-    vehicle-abcrown --version
-    vehicle-abcrown QUERY --network NAME=FILE ... [α,β-CROWN arguments]
+    vnnlib-abcrown --name
+    vnnlib-abcrown --version
+    vnnlib-abcrown QUERY --network NAME=FILE ... [α,β-CROWN arguments]
 
 prints `unsat`, `timeout`, or `sat` followed by every tensor of the query as
 a `NAME Real [d1,d2]` line and one value per line in row-major order.
@@ -44,7 +44,7 @@ def main(argv=None):
         return 0
 
     parser = argparse.ArgumentParser(
-        prog="vehicle-abcrown", description="Vehicle solver backend using α,β-CROWN. "
+        prog="vnnlib-abcrown", description="Vehicle solver backend using α,β-CROWN. "
         "Unrecognised arguments are passed to α,β-CROWN.")
     parser.add_argument("query")
     parser.add_argument("--network", action="append", default=[], metavar="NAME=FILE")
@@ -60,12 +60,12 @@ def main(argv=None):
     args, abcrown_args = parser.parse_known_args(argv)
 
     network_paths = dict(n.split("=", 1) for n in args.network)
-    keep = args.keep or bool(os.environ.get("VEHICLE_ABCROWN_KEEP"))
-    work_dir = tempfile.mkdtemp(prefix="vehicle-abcrown-")
+    keep = args.keep or bool(os.environ.get("VNNLIB_ABCROWN_KEEP"))
+    work_dir = tempfile.mkdtemp(prefix="vnnlib-abcrown-")
     try:
         query = read_query(args.query)
         solution = solve(query, network_paths, work_dir, Runner(work_dir, abcrown_args),
-                         exact_inputs=args.exact_inputs or bool(os.environ.get("VEHICLE_ABCROWN_EXACT_INPUTS")),
+                         exact_inputs=args.exact_inputs or bool(os.environ.get("VNNLIB_ABCROWN_EXACT_INPUTS")),
                          max_rounds=args.max_rounds)
         print_solution(solution, query)
         return 0

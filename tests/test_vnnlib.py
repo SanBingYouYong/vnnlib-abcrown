@@ -1,4 +1,4 @@
-from vehicle_abcrown.vnnlib import (
+from vnnlib_abcrown.vnnlib import (
     FALSE, TRUE, conjuncts, evaluate, negate, parse_query, substitute, to_dnf, tokenize)
 
 from helpers import global_query

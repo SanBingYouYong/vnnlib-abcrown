@@ -41,7 +41,7 @@ attack:
 """
 
 # Problems with at most this many input variables use INPUT_SPLIT_CONFIG.
-INPUT_SPLIT_MAX_INPUTS = int(os.environ.get("VEHICLE_ABCROWN_INPUT_SPLIT_MAX", "16"))
+INPUT_SPLIT_MAX_INPUTS = int(os.environ.get("VNNLIB_ABCROWN_INPUT_SPLIT_MAX", "16"))
 
 
 # Extra arguments for the first run and for each retry after CUDA out-of-memory.
@@ -88,7 +88,7 @@ class Runner:
         # may be shared. On CUDA out-of-memory, retry with smaller fixed batches.
         for attempt, extra in enumerate(OOM_RETRIES):
             if attempt:
-                print("[vehicle-abcrown] α,β-CROWN ran out of GPU memory; retrying with "
+                print("[vnnlib-abcrown] α,β-CROWN ran out of GPU memory; retrying with "
                       + " ".join(extra), file=sys.stderr, flush=True)
             if os.path.exists(results_file):
                 os.remove(results_file)
@@ -118,6 +118,6 @@ class Runner:
             xs = {int(m.group(1)): float(m.group(2))
                   for m in re.finditer(r"\(X_(\d+)\s+([-+eE0-9.]+)\)", content)}
             return "sat", [xs[i] for i in range(num_inputs)]
-        print(f"[vehicle-abcrown] α,β-CROWN returned '{status}'; reporting 'timeout'",
+        print(f"[vnnlib-abcrown] α,β-CROWN returned '{status}'; reporting 'timeout'",
               file=sys.stderr, flush=True)
         return "timeout", None
