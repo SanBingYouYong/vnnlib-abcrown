@@ -8,7 +8,7 @@ import onnxruntime as ort
 
 from vnnlib_abcrown.cli import print_solution
 from vnnlib_abcrown.translate import solve
-from vnnlib_abcrown.vnnlib import parse_query
+from vnnlib_abcrown.query import parse_query
 
 from helpers import global_query, make_mlp, mlp_forward, mlp_weights
 
@@ -93,7 +93,7 @@ def test_refinement_adds_violated_input_constraints(tmp_path):
     _, path = mlp(tmp_path)
     # A box plus x0 + x1 <= 1.5, which does not fit the box.
     q = parse_query(
-        "(declare-network f (declare-input f_X Real [2]) (declare-output f_Y Real [2]))\n"
+        "(vnnlib-version <2.0>)\n(declare-network f (declare-input f_X Real [2]) (declare-output f_Y Real [2]))\n"
         "(assert (and (<= 0.0 f_X[0]) (<= f_X[0] 1.0)))\n"
         "(assert (and (<= 0.0 f_X[1]) (<= f_X[1] 1.0)))\n"
         "(assert (<= (+ f_X[0] f_X[1]) 1.5))\n"
@@ -142,7 +142,7 @@ def test_all_networks_pinned_needs_no_solver(tmp_path):
     y0 = mlp_forward(w, [0.5, 0.5])[0]
     for bound, expected in ((y0 - 1, "sat"), (y0 + 1, "unsat")):
         q = parse_query(
-            "(declare-network f (declare-input f_X Real [2]) (declare-output f_Y Real [2]))\n"
+            "(vnnlib-version <2.0>)\n(declare-network f (declare-input f_X Real [2]) (declare-output f_Y Real [2]))\n"
             f"(assert (== f_X[0] 0.5))\n(assert (== f_X[1] 0.5))\n(assert (>= f_Y[0] {bound}))\n")
         assert solve(q, {"f": path}, str(tmp_path), None).status == expected
 
@@ -150,7 +150,7 @@ def test_all_networks_pinned_needs_no_solver(tmp_path):
 def test_mixed_input_output_constraint(tmp_path):
     w, path = mlp(tmp_path)
     q = parse_query(
-        "(declare-network f (declare-input f_X Real [2]) (declare-output f_Y Real [2]))\n"
+        "(vnnlib-version <2.0>)\n(declare-network f (declare-input f_X Real [2]) (declare-output f_Y Real [2]))\n"
         "(assert (and (<= 0.0 f_X[0]) (<= f_X[0] 1.0)))\n"
         "(assert (and (<= 0.0 f_X[1]) (<= f_X[1] 1.0)))\n"
         "(assert (or (>= (- f_Y[0] f_X[0]) 0.1) (<= (+ f_Y[1] f_X[1]) -5.0)))\n")
@@ -167,7 +167,7 @@ def identity_net(tmp_path):
 
 
 STRICT_QUERY = (
-    "(declare-network f (declare-input f_X Real [2]) (declare-output f_Y Real [2]))\n"
+    "(vnnlib-version <2.0>)\n(declare-network f (declare-input f_X Real [2]) (declare-output f_Y Real [2]))\n"
     "(assert (and (<= 0.0 f_X[0]) (<= f_X[0] 1.0)))\n"
     "(assert (and (<= 0.0 f_X[1]) (<= f_X[1] 1.0)))\n"
     "(assert (> f_Y[0] f_Y[1]))\n")
@@ -186,7 +186,7 @@ def test_tied_counterexample_is_not_reported_as_sat(tmp_path):
     q = parse_query(STRICT_QUERY)
     assert solve(q, {"f": identity_net(tmp_path)}, str(tmp_path), tie_then_unsat).status == "timeout"
     assert len(calls) == 2
-    assert "(<= Y_0 -0.0)" in calls[0] and "(<= Y_0 -1e-06)" in calls[1]
+    assert "(<= Y_0 0.0)" in calls[0] and "(<= Y_0 -1e-06)" in calls[1]
 
 
 def test_margin_round_finds_a_genuine_counterexample(tmp_path):

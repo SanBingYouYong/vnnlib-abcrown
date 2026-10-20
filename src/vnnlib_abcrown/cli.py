@@ -18,7 +18,7 @@ import traceback
 from . import __version__
 from .runner import Runner
 from .translate import fmt, log, solve
-from .vnnlib import Unsupported, read_query
+from .query import Unsupported, read_query
 
 NAME = "abcrown"
 

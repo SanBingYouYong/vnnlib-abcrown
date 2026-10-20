@@ -19,7 +19,7 @@ import heapq
 
 import numpy as np
 
-from .vnnlib import Unsupported
+from .query import Unsupported
 
 # Coefficients smaller than this are treated as zero during elimination.
 EPS = 1e-12

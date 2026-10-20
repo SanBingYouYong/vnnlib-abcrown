@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Use alpha-beta-CROWN as a verification backend for the Vehicle specification language"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy", "onnx", "onnxruntime"]
+dependencies = ["numpy", "onnx", "onnxruntime", "vnnlib>=1.0.2"]
 
 [project.optional-dependencies]
 test = ["pytest"]

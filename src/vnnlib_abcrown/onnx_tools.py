@@ -6,7 +6,7 @@ import onnx
 import onnxruntime as ort
 from onnx import TensorProto, helper, numpy_helper
 
-from .vnnlib import Unsupported
+from .query import Unsupported
 
 
 ################################################################################

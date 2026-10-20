@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from vnnlib_abcrown.inputs import analyse
-from vnnlib_abcrown.vnnlib import Unsupported
+from vnnlib_abcrown.query import Unsupported
 
 
 def box(key, lo, hi):

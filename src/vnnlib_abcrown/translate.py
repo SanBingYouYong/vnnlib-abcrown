@@ -19,7 +19,7 @@ import numpy as np
 
 from . import inputs
 from .onnx_tools import Block, build_spec_network, run_onnx
-from .vnnlib import FALSE, TRUE, Unsupported, conjuncts, evaluate, substitute, to_dnf
+from .query import FALSE, TRUE, Unsupported, conjuncts, evaluate, substitute, to_dnf
 
 # Counterexamples are re-checked against the original query: constraints on
 # network outputs exactly (a tolerance there once let a near-tie through as a
