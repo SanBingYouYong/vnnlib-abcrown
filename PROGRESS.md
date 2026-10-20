@@ -7,7 +7,8 @@ records what changed, how it was checked, and what is still open.
 
 | Area | State |
 |---|---|
-| Vehicle ↔ solver protocol (`--name`, `--version`, query + `--network`, `sat`/`unsat`/`timeout` + witness) | done |
+| VNN-LIB 2.0 solver CLI (`--name`, `--version`, `verify`, `supports`) and Vehicle 0.28's earlier form | done |
+| Parsing with the reference `vnnlib` package | done |
 | Fixed network applications (inputs pinned by dataset) evaluated to constants | done |
 | Several free network applications (product network) | done, tested |
 | Linked input constraints (change of variables) | done, tested |
@@ -41,6 +42,49 @@ records what changed, how it was checked, and what is still open.
 * ONNX coverage beyond the networks in the tutorial is untested.
 * `pip install` into α,β-CROWN's environment was checked with
   `uv pip install --target`, not with a real install into the environment.
+
+## 2026-10-20: VNN-LIB 2.0 wrapper (first feedback)
+
+Feedback from the VNN-LIB/Vehicle side: (1) it is a VNN-LIB 2.0 wrapper, not
+a Vehicle wrapper, and should be presented as a community tool; (2) the
+hand-written parser duplicates the `vnnlib` package (VNNLIB-Python); (3) the
+standard's `supports` command was missing, and future Vehicle versions will
+rely on it. Changes:
+
+* **Renamed** to `vnnlib-abcrown` (package `vnnlib_abcrown`, `bin/vnnlib-abcrown`,
+  `VNNLIB_ABCROWN_*` variables). README/REVIEW reframed; version 0.3.0.
+* **Parser:** queries are parsed, type-checked, linearised and put into DNF
+  per assertion by `vnnlib` ≥ 1.0.2 (`query.py` replaces `vnnlib.py`; the
+  parsing part shrank from ~200 to ~70 lines). Element types other than
+  `real`, hidden nodes and `!=` are rejected explicitly.
+* **CLI** per the standard: `verify QUERY --network ... [--timeout S]` with
+  `sat` / `unsat` / `timed-out` / `unknown`, and `supports` for every
+  capability. `--timeout` now covers the whole query (each α,β-CROWN run
+  gets the time left), which also tells α,β-CROWN's `timeout` apart into
+  `timed-out` and `unknown`.
+
+Found while doing this (worth reporting upstream):
+
+* Vehicle (0.28 and master at 1c97857) writes the element type `Real`; the
+  standard and `vnnlib`'s type checker require `real`, so the reference
+  parser rejected all 64 queries Vehicle produced for the examples. The
+  wrapper rewrites `Real` to `real` before parsing.
+* Vehicle still calls solvers without `verify`, only understands `timeout`,
+  and passes `--network` also for `equal-to` networks (which the standard
+  says must be an error). The wrapper keeps that form working: without
+  `verify`, `timed-out` and `unknown` are printed as `timeout`.
+
+Checked: 52 fast tests and 7 end-to-end tests (α,β-CROWN + Vehicle 0.28) pass.
+46 of the 51 tutorial cases were re-run through Vehicle with the new wrapper
+(all but ACAS Xu N1,7 p8 and N1,8 p8 and the three Fashion MNIST cases, the
+slowest): verdicts
+identical to the recorded run, total time 2223 s vs 2252 s. The `supports`
+answers for ONNX opsets (8–20) and operators are those of the tutorial's
+networks, not α,β-CROWN's full coverage.
+
+Open: rename the GitHub repository; `--serialise-assignments` and UNSAT
+proofs are not implemented (reported as unsupported); move to
+`vnnlib.query` once VNNLIB-Python releases it.
 
 ## 2026-10-06: prepared for review
 
