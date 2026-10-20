@@ -24,7 +24,7 @@ needs_abcrown = pytest.mark.skipif(not have_abcrown(), reason="α,β-CROWN not f
 def run_backend(query_path, networks, *extra, cwd=None):
     env = dict(os.environ)
     env.setdefault("ABCROWN_PYTHON", sys.executable)
-    args = [LAUNCHER, query_path] + [f"--network={n}={p}" for n, p in networks.items()]
+    args = [LAUNCHER, "verify", query_path] + [f"--network={n}={p}" for n, p in networks.items()]
     proc = subprocess.run(args + ["--timeout", "120"] + list(extra), capture_output=True,
                           text=True, env=env, cwd=cwd, timeout=900)
     assert proc.returncode == 0, proc.stderr

@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 # Used when the user passes no `--config` of their own.
 #
@@ -60,16 +61,23 @@ def abcrown_dir():
 
 
 class Runner:
-    def __init__(self, work_dir, extra_args):
+    def __init__(self, work_dir, extra_args, timeout=None):
         self.work_dir = work_dir
         self.extra_args = list(extra_args)
         self.python = os.environ.get("ABCROWN_PYTHON", sys.executable)
+        # The timeout covers the whole query, which may take several runs.
+        self.deadline = None if timeout is None else time.monotonic() + timeout
 
     def __call__(self, onnx_path, vnnlib_path, num_inputs):
         results_file = os.path.join(self.work_dir, "result.txt")
         cex_file = os.path.join(self.work_dir, "cex.txt")
         log_file = os.path.join(self.work_dir, "abcrown.log")
         args = self.extra_args
+        if self.deadline is not None:
+            remaining = self.deadline - time.monotonic()
+            if remaining <= 0:
+                return "timed-out", None
+            args = args + ["--timeout", repr(remaining)]
         if not any(a == "--config" or a.startswith("--config=") for a in args):
             config_path = os.path.join(self.work_dir, "config.yaml")
             with open(config_path, "w") as f:
@@ -118,6 +126,11 @@ class Runner:
             xs = {int(m.group(1)): float(m.group(2))
                   for m in re.finditer(r"\(X_(\d+)\s+([-+eE0-9.]+)\)", content)}
             return "sat", [xs[i] for i in range(num_inputs)]
-        print(f"[vnnlib-abcrown] α,β-CROWN returned '{status}'; reporting 'timeout'",
-              file=sys.stderr, flush=True)
-        return "timeout", None
+        # α,β-CROWN writes `timeout` both when it runs out of time and when it
+        # gives up. It was given the time left before the deadline, so it gave
+        # up if the deadline has not passed yet.
+        if self.deadline is None or time.monotonic() >= self.deadline:
+            return "timed-out", None
+        print(f"[vnnlib-abcrown] α,β-CROWN returned '{status}' before the timeout; "
+              "reporting 'unknown'", file=sys.stderr, flush=True)
+        return "unknown", None

@@ -44,7 +44,7 @@ def fmt(v):
 
 class Solution:
     def __init__(self, status, values=None):
-        self.status = status  # "sat", "unsat" or "timeout"
+        self.status = status  # "sat", "unsat", "timed-out" or "unknown"
         self.values = values
 
 
@@ -54,7 +54,8 @@ def _is_input_atom(g):
 
 def solve(query, network_paths, work_dir, run_abcrown, exact_inputs=False, max_rounds=5):
     """`run_abcrown(onnx_path, vnnlib_path, num_inputs)` returns
-    (status, z) with status in "sat"/"unsat"/"timeout" and z the counterexample.
+    (status, z) with status in "sat"/"unsat"/"timed-out"/"unknown" and z the
+    counterexample.
 
     Input constraints that do not fit the box ("leftover" constraints) each
     cost a specification row, which can make α,β-CROWN run out of memory. So
@@ -172,8 +173,8 @@ def solve(query, network_paths, work_dir, run_abcrown, exact_inputs=False, max_r
             if status == "unsat" and margin:
                 # Only counterexamples by at least the margin were ruled out.
                 log(f"no counterexample violates the property by margin {margin:g}; it may hold "
-                    "or fail only within the margin, so reporting 'timeout'")
-                return Solution("timeout")
+                    "or fail only within the margin, so reporting 'unknown'")
+                return Solution("unknown")
             if status != "sat":
                 return Solution(status)
             result = witness(z)
@@ -193,13 +194,13 @@ def solve(query, network_paths, work_dir, run_abcrown, exact_inputs=False, max_r
         margin = next(margins, None)
         if margin is None:
             log("no counterexample that passes the exact re-check; "
-                "reporting 'timeout' instead of an unchecked 'sat'")
-            return Solution("timeout")
+                "reporting 'unknown' instead of an unchecked 'sat'")
+            return Solution("unknown")
         log(f"the counterexample does not satisfy the original query exactly; asking for "
             f"one that violates it by margin {margin:g}")
 
-    log(f"no valid counterexample after {max_rounds} rounds; reporting 'timeout'")
-    return Solution("timeout")
+    log(f"no valid counterexample after {max_rounds} rounds; reporting 'unknown'")
+    return Solution("unknown")
 
 
 def _tolerance(atom):

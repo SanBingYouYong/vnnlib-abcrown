@@ -63,7 +63,7 @@ class FakeAbcrown:
             if any(all(y[j] <= c if op == "<=" else y[j] >= c for op, j, c in clause)
                    for clause in clauses):
                 return "sat", list(z)
-        return "timeout", None
+        return "unknown", None
 
 
 def mlp(tmp_path, seed=0):
@@ -84,9 +84,9 @@ def test_global_query_counterexample_is_valid(tmp_path):
     d = mlp_forward(w, y)[0] - mlp_forward(w, x)[0]
     assert d > 0.01 - 1e-4
     out = io.StringIO()
-    print_solution(sol, q, out)
+    print_solution(sol, q, out=out)
     lines = out.getvalue().splitlines()
-    assert lines[0] == "sat" and lines[1] == "f_X Real [2]" and len(lines) == 1 + 4 * 3
+    assert lines[0] == "sat" and lines[1] == "f_X real [2]" and len(lines) == 1 + 4 * 3
 
 
 def test_refinement_adds_violated_input_constraints(tmp_path):
@@ -113,10 +113,10 @@ def test_refinement_adds_violated_input_constraints(tmp_path):
     assert " 1.5))" in calls[1] and " 1.5))" not in calls[0]
 
 
-def test_unsat_and_timeout_are_passed_through(tmp_path):
+def test_unsat_timed_out_and_unknown_are_passed_through(tmp_path):
     _, path = mlp(tmp_path)
     q = parse_query(global_query(2, 2, 0.2, 0.01, output_index=1, upper=False))
-    for status in ("unsat", "timeout"):
+    for status in ("unsat", "timed-out", "unknown"):
         assert solve(q, {"f": path, "f_2": path}, str(tmp_path), FakeAbcrown(status)).status == status
 
 
@@ -184,7 +184,7 @@ def test_tied_counterexample_is_not_reported_as_sat(tmp_path):
         return ("sat", [0.5, 0.5]) if len(calls) == 1 else ("unsat", None)
 
     q = parse_query(STRICT_QUERY)
-    assert solve(q, {"f": identity_net(tmp_path)}, str(tmp_path), tie_then_unsat).status == "timeout"
+    assert solve(q, {"f": identity_net(tmp_path)}, str(tmp_path), tie_then_unsat).status == "unknown"
     assert len(calls) == 2
     assert "(<= Y_0 0.0)" in calls[0] and "(<= Y_0 -1e-06)" in calls[1]
 
