@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vnnlib-abcrown"
 dynamic = ["version"]
-description = "Use alpha-beta-CROWN as a verification backend for the Vehicle specification language"
+description = "alpha-beta-CROWN as a VNN-LIB 2.0 solver"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["numpy", "onnx", "onnxruntime", "vnnlib>=1.0.2"]

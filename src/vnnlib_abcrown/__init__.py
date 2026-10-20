@@ -1,3 +1,3 @@
-"""Use α,β-CROWN as a verification backend for Vehicle."""
+"""α,β-CROWN as a VNN-LIB 2.0 solver."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

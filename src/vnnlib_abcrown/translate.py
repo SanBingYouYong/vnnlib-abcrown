@@ -1,4 +1,4 @@
-"""Solving a Vehicle VNN-LIB 2.0 query with α,β-CROWN.
+"""Solving a VNN-LIB 2.0 query with α,β-CROWN.
 
 1. Network applications whose inputs are all pinned to constants (e.g. an
    image from a dataset) are evaluated, and their outputs become constants.

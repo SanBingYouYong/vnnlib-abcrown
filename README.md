@@ -1,8 +1,19 @@
 # vnnlib-abcrown
 
-Use [α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN) as a
-verification backend for the [Vehicle](https://github.com/vehicle-lang/vehicle)
-specification language.
+Makes [α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN) a
+[VNN-LIB 2.0](https://www.vnnlib.org/) solver: it reads VNN-LIB 2.0 queries
+over ONNX networks and implements the standard's solver command-line
+interface, so any tool that speaks VNN-LIB 2.0 can use α,β-CROWN as its
+verifier. It was developed and tested with the
+[Vehicle](https://github.com/vehicle-lang/vehicle) specification language, the
+main VNN-LIB 2.0 client today.
+
+```bash
+vnnlib-abcrown verify query.vnnlib --network f=net.onnx --timeout 300
+vnnlib-abcrown supports --multiple-network-theories
+```
+
+With Vehicle:
 
 ```bash
 vehicle verify -s spec.vcl -n net:net.onnx ... \
@@ -10,10 +21,11 @@ vehicle verify -s spec.vcl -n net:net.onnx ... \
   --solver-args "--timeout 300"
 ```
 
-Compared with Vehicle's built-in Marabou backend, this backend supports:
+Beyond the single-network, box-input queries that α,β-CROWN reads natively
+(VNN-LIB 1.0), it supports:
 
-* **Properties with several network applications**, e.g. comparing
-  `f image` with `f perturbedImage` (standard robustness), or global
+* **Several networks, or several applications of one network**, e.g.
+  comparing `f image` with `f perturbedImage` (standard robustness), or global
   properties over two free inputs (`forall x y . close x y => ...`).
 * **Input regions that are not boxes**, such as constraints linking two
   inputs (`|x - y| <= eps`) and constraints that mix inputs and outputs.
@@ -21,11 +33,13 @@ Compared with Vehicle's built-in Marabou backend, this backend supports:
 
 ## Requirements
 
-* Vehicle ≥ 0.28 (tested with 0.28.0).
 * An α,β-CROWN checkout with its own virtual environment
-  (`<checkout>/.venv`). The adapter runs in that environment and needs only
-  `numpy`, `onnx` and `onnxruntime`, which α,β-CROWN already installs.
-* Normally a CUDA GPU. Pass `--solver-args "--device cpu"` otherwise.
+  (`<checkout>/.venv`). The adapter runs in that environment and needs
+  `numpy`, `onnx` and `onnxruntime`, which α,β-CROWN already installs, and
+  [`vnnlib`](https://github.com/VNNLIB/VNNLIB-Python) (≥ 1.0.2), the
+  reference VNN-LIB 2.0 parser: `pip install vnnlib` in that environment.
+* Normally a CUDA GPU. Pass `--device cpu` otherwise.
+* To use it from Vehicle: Vehicle ≥ 0.28 (tested with 0.28.0).
 
 Configuration is through environment variables:
 
@@ -42,10 +56,13 @@ its `vnnlib-abcrown` script as the solver.
 
 ## Options
 
-`--solver-args` are passed to α,β-CROWN's `abcrown.py`, except for these:
+Options of `verify` (from Vehicle: `--solver-args`) are passed to α,β-CROWN's
+`abcrown.py`, except for these:
 
 | Option | Meaning |
 |---|---|
+| `--network NAME=FILE` | the ONNX file for a network declared in the query |
+| `--timeout S` | time limit for the whole query; each α,β-CROWN run gets the time left |
 | `--keep` | keep the generated network, query and α,β-CROWN log |
 | `--exact-inputs` | enforce all input constraints that do not fit the input box from the start (see below) |
 | `--max-rounds N` | rounds of the refinement loop (default 5) |
@@ -61,20 +78,37 @@ Without `--config`, the adapter chooses α,β-CROWN's configuration:
 
 Both run on CUDA. If α,β-CROWN runs out of GPU memory, the adapter retries
 with smaller fixed batch sizes (64, then 8). Any α,β-CROWN option can be given
-too, e.g. `--timeout 300`, `--conv_mode patches` or `--config my.yaml`.
+too, e.g. `--conv_mode patches` or `--config my.yaml`.
 
 ## How it works
 
-Vehicle calls any solver other than Marabou as
+The command-line interface follows the VNN-LIB 2.0 standard (chapter "Solver
+Command-line Interface"):
 
 ```
 vnnlib-abcrown --name
 vnnlib-abcrown --version
-vnnlib-abcrown QUERY.vnnlib --network NAME=FILE.onnx ... <solver args>
+vnnlib-abcrown supports --CAPABILITY
+vnnlib-abcrown verify QUERY.vnnlib --network NAME=FILE.onnx ... [--timeout S] [options]
 ```
 
-with a VNN-LIB 2.0 query, and expects `unsat`, `timeout`, or `sat` followed by
-a value for every input and output tensor. For each query the adapter:
+`verify` prints `unsat`, `timed-out`, `unknown`, or `sat` followed by a value
+for every input and output tensor. `supports` answers every capability the
+standard lists (an unknown capability prints the list of names). In short: VNN-LIB 2.0, element type `real` only, theories NH, SIO, SNET /
+MENET / MINET / MNET, SNC / MNC and BND / OUTC / LIN, no serialised
+assignments, no UNSAT proofs. The ONNX operators reported are the ones it has
+been tested on.
+
+Vehicle (0.28 and its current development version) still uses an earlier form
+of this interface: it leaves out `verify` and only understands `timeout`. When
+called without `verify`, the adapter therefore prints `timeout` for both
+`timed-out` and `unknown`. Vehicle also writes the element type as `Real`
+rather than the standard's `real`, and passes `--network` for networks
+declared `equal-to` another; both are accepted.
+
+Queries are parsed, type-checked and linearised by the
+[`vnnlib`](https://github.com/VNNLIB/VNNLIB-Python) package. For each query
+the adapter:
 
 1. **Evaluates fixed network applications.** Applications whose inputs are
    all pinned to constants (e.g. `f image` with `image` from a dataset) are
@@ -106,7 +140,7 @@ a value for every input and output tensor. For each query the adapter:
    does not violate the strict property. In that case the adapter asks
    again for a counterexample that violates every output constraint by a
    margin (1e-6, then 1e-4, relative). If none exists, the answer is
-   `timeout`: the property might hold, or fail only within the margin.
+   `unknown`: the property might hold, or fail only within the margin.
 
 Each leftover input constraint costs α,β-CROWN one specification row, and
 thousands of them run out of memory. By default they are therefore enforced
@@ -121,13 +155,18 @@ lazily, in rounds:
 
 ## Limitations
 
-* **At most one input and one output per network.** Vehicle itself does not
-  emit networks with several inputs or outputs.
-* **Linear specifications only**, as with any Vehicle VNN-LIB backend.
+* **At most one input and one output per network, no hidden nodes**
+  (theories SIO and NH). Vehicle itself does not emit networks with several
+  inputs or outputs.
+* **Linear specifications only** (theory LIN), without `!=`.
+* **Element type `real` only.** α,β-CROWN computes in float32 without sound
+  rounding, so queries over `float32` etc. are rejected, as the standard
+  requires; write them over `real` to accept that.
 * **Bounded inputs.** Every input must be bounded in some direction of the
   constraints; otherwise the query is rejected as unsupported.
-* **Some results are reported as `timeout`:** α,β-CROWN's `unknown`, and any
-  counterexample that still fails the re-check after `--max-rounds` rounds.
+* **Some results are `unknown`:** α,β-CROWN giving up before the time limit,
+  and any counterexample that still fails the re-check after `--max-rounds`
+  rounds. Through Vehicle these show up as timeouts (see above).
 * **Strict inequalities are checked as `<=`.** This is sound for `unsat`.
   Counterexamples are re-checked exactly, and retried with a margin as
   described above.
@@ -136,12 +175,13 @@ lazily, in rounds:
   dimension, as `MatMul`, `Add` and `Relu` do.
 * **No proofs on exact boundaries.** A property whose only "violations" lie
   exactly on a boundary, e.g. `f x >= 0` where `f x = 0` is reachable, comes
-  back as `timeout`. A float verifier cannot separate `< 0` from `<= 0`.
+  back as `unknown`. A float verifier cannot separate `< 0` from `<= 0`.
   Marabou reports such points as counterexamples, wrongly.
 * **`!=` is rejected by Vehicle** for every solver except Marabou, even
   between parameters. This happens in Vehicle's VNN-LIB compiler, before the
-  backend runs. Write `a != b` as `a < b or a > b`.
-* **One α,β-CROWN process per query** (about 5 s of startup each). Vehicle
+  solver runs. Write `a != b` as `a < b or a > b`.
+* **One α,β-CROWN process per query** (about 5 s of startup each, not
+  counted by α,β-CROWN's own timeout). Vehicle
   splits disjunctive properties into many queries: Fashion MNIST robustness
   takes ~5× longer than with Marabou for this reason.
 * **Hard global properties.** Global properties of large networks are usually

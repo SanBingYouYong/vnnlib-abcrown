@@ -1,21 +1,30 @@
 # Notes for reviewers
 
-Thank you for taking a look. This repository is an adapter that lets the
-[Vehicle](https://github.com/vehicle-lang/vehicle) specification language use
-[α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN) as its
-verifier. It was written while working through the
+Thank you for taking a look. This repository is a thin wrapper that makes
+[α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN) a
+[VNN-LIB 2.0](https://www.vnnlib.org/) solver, so that any VNN-LIB 2.0 client
+can use it. It was written while working through the
 [Vehicle tutorial](https://vehicle-lang.github.io/tutorial/), whose MNIST
-exercise on standard robustness cannot be run with Vehicle's Marabou backend.
+exercise on standard robustness cannot be run with Vehicle's Marabou backend,
+and Vehicle is the client it has been tested with.
 
 **How it was made.** The code, tests and documents were written by an AI
 coding assistant (Claude, by Anthropic), working with a student who is new to
-the field. Nothing here has been reviewed by anyone with verification
-expertise yet; that is what we are asking for.
+the field. A first round of feedback from the VNN-LIB/Vehicle side led to
+three changes: it is presented as a VNN-LIB 2.0 wrapper rather than a Vehicle
+backend, queries are parsed with the reference
+[`vnnlib`](https://github.com/VNNLIB/VNNLIB-Python) package instead of a
+hand-written parser, and the standard's `verify` and `supports` commands are
+implemented (see `PROGRESS.md`). The verification approach itself has not yet
+been reviewed by anyone with verification expertise; that is what we are
+asking for.
 
 ## What we claim
 
-1. Vehicle's generic VNN-LIB solver interface is enough to plug in α,β-CROWN
-   without changing either tool.
+1. The VNN-LIB 2.0 solver interface is enough to plug α,β-CROWN into Vehicle
+   without changing either tool. The wrapper implements the standard's
+   `verify` and `supports` commands, and also the earlier form of `verify`
+   that Vehicle 0.28 uses.
 2. The adapter handles queries with **several network applications**:
    * applications with dataset-fixed inputs are evaluated to constants;
    * applications with free inputs are verified together as one product
@@ -33,11 +42,11 @@ expertise yet; that is what we are asking for.
 | | |
 |---|---|
 | `docs/how-it-works.md` | the pipeline, step by step, with a worked example |
-| `src/vnnlib_abcrown/` | the code (~1300 lines); `inputs.py` and `translate.py` hold the main ideas |
+| `src/vnnlib_abcrown/` | the code (~1250 lines); `inputs.py` and `translate.py` hold the main ideas |
 | `docs/tutorial-check/README.md` | Marabou vs α,β-CROWN on the tutorial: method and results |
 | `docs/tutorial-check/results/` | every transcript from that run, and `report.md` with the per-case table |
 | `PROGRESS.md` | development log, including bugs found and how they were fixed |
-| `tests/` | 23 fast tests (fake solver) and 7 end-to-end tests (α,β-CROWN + Vehicle) |
+| `tests/` | 52 fast tests (fake solver) and 7 end-to-end tests (α,β-CROWN + Vehicle) |
 
 ## Questions we would most like answered
 
@@ -50,7 +59,7 @@ expertise yet; that is what we are asking for.
 2. **Strict inequalities and float arithmetic.**
    * Strict `<` becomes `≤` for α,β-CROWN. A counterexample that fails an
      *exact* re-check triggers a retry demanding a violation margin. When no
-     such counterexample exists, we report `timeout` rather than a verdict.
+     such counterexample exists, we report `unknown` rather than a verdict.
    * Is this the right behaviour? Is there an established way to handle the
      strict/non-strict gap with a floating-point verifier?
 3. **Marabou's counterexamples.** On two tutorial cases, Marabou reports
@@ -75,15 +84,15 @@ expertise yet; that is what we are asking for.
    bound is about −1000 where 0 is needed, so nothing can be proved. Is this
    expected, and would a different encoding help (e.g. relational /
    "twin network" methods)?
-7. **Is this worth upstreaming** (to Vehicle, or as a published tool), and if
-   so, what would be missing?
+7. **Upstreaming.** The suggestion so far is that a tidied-up version
+   belongs in α,β-CROWN itself. What would be missing for that?
 
 ## Known limitations
 
 See the README's Limitations section. In short:
 
 * `!=` is rejected by Vehicle's VNN-LIB compiler before any solver runs.
-* Exact-boundary properties come back as `timeout`.
+* Exact-boundary properties come back as `unknown` (`timeout` through Vehicle).
 * There is one α,β-CROWN process per query (about 5 s start-up each).
 * Everything was tested with Vehicle 0.28.0 on one machine (2× RTX 3090).
 * No licence has been chosen yet.

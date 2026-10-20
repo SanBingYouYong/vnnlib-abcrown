@@ -1,9 +1,10 @@
 # How vnnlib-abcrown works
 
-This document describes the pipeline from `vehicle verify` to α,β-CROWN and
-back. The code is in `src/vnnlib_abcrown/`.
+This document describes the pipeline from a VNN-LIB 2.0 query to α,β-CROWN
+and back, using Vehicle as the example client. The code is in
+`src/vnnlib_abcrown/`.
 
-## Vehicle's side (unchanged)
+## The client's side: Vehicle (unchanged)
 
 ```bash
 vehicle verify -s spec.vcl -n classifier:net.onnx ... --solver bin/vnnlib-abcrown
@@ -12,7 +13,7 @@ vehicle verify -s spec.vcl -n classifier:net.onnx ... --solver bin/vnnlib-abcrow
 Vehicle (0.28) treats any solver it does not recognise as Marabou as a generic
 "VNN-LIB solver" (`src/Vehicle/Verify/Solver/VNNLIB.hs` in Vehicle):
 
-1. It calls `vnnlib-abcrown --name` (we answer `abcrown`) and `--version`.
+1. It calls `vnnlib-abcrown --name` (we answer `alpha-beta-CROWN`) and `--version`.
 2. It compiles each property into **queries** in VNN-LIB 2.0. Each query
    asks for an assignment that *violates* the property (or, for `exists`,
    satisfies it). Vehicle performs the quantifier and disjunction splitting
@@ -25,10 +26,13 @@ Vehicle (0.28) treats any solver it does not recognise as Marabou as a generic
    ```
 
    with one `--network` per *application* of a network in the property.
+   This is an earlier form of the standard's `vnnlib-abcrown verify QUERY
+   ...`, which the adapter also accepts.
 4. It expects on standard output one of:
    * `unsat`;
-   * `timeout`;
-   * `sat`, followed by every declared tensor as a line `name Real [d1,d2]`
+   * `timeout` (the standard has `timed-out` and `unknown`; without `verify`
+     the adapter prints `timeout` for both);
+   * `sat`, followed by every declared tensor as a line `name real [d1,d2]`
      and then one value per line.
 
    It then reports ✓ / ✗ / timeout and writes the verification cache that
@@ -40,12 +44,13 @@ network applications in one query, so properties such as standard robustness
 
 ## The adapter, per query (`translate.solve`)
 
-### a. Parse (`vnnlib.py`)
+### a. Parse (`query.py`)
 
-The adapter reads the network declarations (one input and one output tensor
-each, as Vehicle emits them) and the assertions. Assertions are linear
-(in)equalities over input variables `X` and output variables `Y`, combined
-with `and`, `or` and `not`.
+The [`vnnlib`](https://github.com/VNNLIB/VNNLIB-Python) package parses and
+type-checks the query, linearises each comparison and puts each assertion
+into DNF. `query.py` turns the result into linear (in)equalities over input
+variables `X` and output variables `Y`. Networks must have one input and one
+output tensor of type `real` (Vehicle writes `Real`, which is accepted).
 
 ### b. Evaluate network applications with fixed inputs
 
@@ -114,10 +119,13 @@ non-strict.**
     which uses input-space branch-and-bound;
   * otherwise: the default (ReLU splitting), with `conv_mode: matrix`.
 * **Other arguments:** everything in Vehicle's `--solver-args` is passed to
-  `abcrown.py`.
+  `abcrown.py`, except the adapter's own options.
+* **Timeout:** `--timeout` covers the whole query; each run gets the time
+  left.
 * **CUDA out of memory:** the run is repeated with batch size 64, then 8,
   with automatic batch enlarging off.
-* **`unknown`** is reported to Vehicle as `timeout`.
+* **α,β-CROWN's `timeout`** means it either ran out of time (`timed-out`) or
+  gave up (`unknown`); the adapter tells these apart by its own deadline.
 
 ### g. Check the answer
 
@@ -133,7 +141,7 @@ non-strict.**
     boundary, e.g. two exactly tied ACAS Xu scores. α,β-CROWN is asked again
     for a point violating every output constraint by `m·(1+|c|)`, with
     `m = 1e-6`, then `1e-4`. A new `unsat` at this stage only rules out
-    violations larger than the margin, so the answer is `timeout`.
+    violations larger than the margin, so the answer is `unknown`.
 
 So `sat` is only reported for points that satisfy the original query when
 the networks are evaluated with onnxruntime, and `unsat` is only reported
@@ -158,8 +166,8 @@ One of Vehicle's queries asks for `p` with `f(image − p)₃ − f(image)₃ > 
 
 | File | Role |
 |---|---|
-| `cli.py` | Vehicle's solver interface, options, output format |
-| `vnnlib.py` | VNN-LIB 2.0 parsing; linear expressions; formulas, DNF |
+| `cli.py` | the VNN-LIB 2.0 solver interface (`verify`, `supports`), options, output format |
+| `query.py` | VNN-LIB 2.0 queries via the `vnnlib` package; linear expressions; formulas, DNF |
 | `inputs.py` | step c |
 | `onnx_tools.py` | step d; running networks |
 | `translate.py` | steps b, e, g; the refinement loop |
